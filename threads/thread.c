@@ -66,13 +66,19 @@ static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
 
+#ifdef USERPROG
+static void init_thread (struct thread *, const char *name, int priority,
+ bool is_user);
+
+#else
 static void init_thread (struct thread *, const char *name, int priority);
+#endif
 
 static bool is_thread (struct thread *) UNUSED;
-static void *alloc_frame (struct thread *, size_t size);
+static void *allocate_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
-static tid_t allocate_tid (void);
+static tid_t alloc_tid (void);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -98,11 +104,15 @@ thread_init (void)
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
-
+  
+  #ifdef USERPROG
+  init_thread (initial_thread, "main", PRI_DEFAULT, false);
+  #else 
   init_thread (initial_thread, "main", PRI_DEFAULT);
+  #endif
 
   initial_thread->status = THREAD_RUNNING;
-  initial_thread->tid = allocate_tid ();
+  initial_thread->tid = alloc_tid ();
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -116,7 +126,11 @@ thread_start (void)
   //init_info (initial_thread, initial_thread->tid);
   
   sema_init (&idle_started, 0);
-  thread_create ("idle", PRI_MIN, idle, &idle_started);
+  #if USERPROG
+thread_create ("idle", PRI_MIN, idle, &idle_started, false);
+#else 
+thread_create ("idle", PRI_MIN, idle, &idle_started);
+#endif
 
   /* Start preemptive thread scheduling. */
   intr_enable ();
@@ -170,14 +184,21 @@ thread_print_stats (void)
    The code provided sets the new thread's `priority' member to
    PRIORITY, but no actual priority scheduling is implemented.
    Priority scheduling is the goal of Problem 1-3. */
+
+#if USERPROG
 tid_t
-thread_create (const char *name, int priority,
-               thread_func *function, void *aux) 
+thread_create (const char *name, int priority, thread_func *function, void *aux, bool is_user)
+#else
+tid_t
+thread_create (const char *name, int priority, thread_func *function, void *aux)
+#endif
+ 
 {
-  struct thread *t;
+
   struct kernel_thread_frame *kf;
-  struct switch_entry_frame *ef;
+  struct thread *t;
   struct switch_threads_frame *sf;
+  struct switch_entry_frame *ef;
   tid_t tid;
 
   ASSERT (function != NULL);
@@ -187,26 +208,25 @@ thread_create (const char *name, int priority,
   if (t == NULL)
     return TID_ERROR;
 
-  /* Initialize thread. */
-  init_thread (t, name, priority);
-  tid = t->tid = allocate_tid ();
-
-  /* Stack frame for kernel_thread(). */
-  kf = alloc_frame (t, sizeof *kf);
+#ifdef USERPROG
+init_thread (t, name, priority, is_user);
+#else  
+init_thread (t, name, priority);
+#endif 
+  tid = t->tid = alloc_tid ();
+  kf = allocate_frame (t, sizeof *kf);
   kf->eip = NULL;
   kf->function = function;
   kf->aux = aux;
-
-  /* Stack frame for switch_entry(). */
-  ef = alloc_frame (t, sizeof *ef);
+  ef = allocate_frame (t, sizeof *ef);
   ef->eip = (void (*) (void)) kernel_thread;
-
-  /* Stack frame for switch_threads(). */
-  sf = alloc_frame (t, sizeof *sf);
+  sf = allocate_frame (t, sizeof *sf);
   sf->eip = switch_entry;
   sf->ebp = 0;
 
-  /* Add to run queue. */
+#ifdef USERPROG
+t->parent = thread_current ();
+#endif 
   thread_unblock (t);
 
   return tid;
@@ -432,7 +452,7 @@ kernel_thread (thread_func *function, void *aux)
   function (aux);       /* Execute the thread function. */
   thread_exit ();       /* If function() returns, kill the thread. */
 }
-
+
 /* Returns the running thread. */
 struct thread *
 running_thread (void) 
@@ -456,8 +476,15 @@ is_thread (struct thread *t)
 
 /* Does basic initialization of T as a blocked thread named
    NAME. */
+
+#ifdef USERPROG
+static void
+init_thread (struct thread *t, const char *name, int priority, bool is_user)
+#else 
 static void
 init_thread (struct thread *t, const char *name, int priority)
+#endif
+
 {
   enum intr_level old_level;
 
@@ -474,6 +501,17 @@ init_thread (struct thread *t, const char *name, int priority)
 
   //t->is_kernel = is_kernel;
 
+#ifdef USERPROG
+
+t->is_user = is_user;
+t->exit_status = -1;
+list_init (&t->children);
+t->parent = NULL;
+list_init (&t->files);
+t->exec = NULL;
+
+#endif
+
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
@@ -483,7 +521,7 @@ init_thread (struct thread *t, const char *name, int priority)
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
    returns a pointer to the frame's base. */
 static void *
-alloc_frame (struct thread *t, size_t size) 
+allocate_frame (struct thread *t, size_t size) 
 {
   /* Stack data is always allocated in word-size units. */
   ASSERT (is_thread (t));
@@ -578,7 +616,7 @@ schedule (void)
 
 /* Returns a tid to use for a new thread. */
 static tid_t
-allocate_tid (void) 
+alloc_tid (void) 
 {
   static tid_t next_tid = 1;
   tid_t tid;
@@ -593,3 +631,26 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+#ifdef USERPROG
+
+void remove_parent (tid_t tid)
+{
+struct list_elem *e;
+struct thread *t;
+for (e = list_begin (&all_list); e != list_end (&all_list);
+
+e = list_next (e))
+ {
+
+ t = list_entry (e, struct thread, allelem);
+ if (is_thread (t) && t->tid == tid && t->parent != NULL)
+
+	{
+	t->parent = NULL;
+	return;
+	}
+ }
+}
+
+#endif	

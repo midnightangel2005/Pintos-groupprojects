@@ -26,8 +26,7 @@ static void page_fault (struct intr_frame *);
 
    Refer to [IA32-v3a] section 5.15 "Exception and Interrupt
    Reference" for a description of each of these exceptions. */
-void
-exception_init (void) 
+void exception_init (void) 
 {
   /* These exceptions can be raised explicitly by a user program,
      e.g. via the INT, INT3, INTO, and BOUND instructions.  Thus,
@@ -68,8 +67,7 @@ exception_print_stats (void)
 }
 
 /* Handler for an exception (probably) caused by a user process. */
-static void
-kill (struct intr_frame *f) 
+static void kill (struct intr_frame *f) 
 {
   /* This interrupt is one (probably) caused by a user process.
      For example, the process might have tried to access unmapped
@@ -119,8 +117,7 @@ kill (struct intr_frame *f)
    can find more information about both of these in the
    description of "Interrupt 14--Page Fault Exception (#PF)" in
    [IA32-v3a] section 5.15 "Exception and Interrupt Reference". */
-static void
-page_fault (struct intr_frame *f) 
+static void page_fault (struct intr_frame *f) 
 {
   bool not_present;  /* True: not-present page, false: writing r/o page. */
   bool write;        /* True: access was write, false: access was read. */
@@ -147,6 +144,14 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+
+if (!user) {
+
+f->eip = (void *) f->eax;
+
+f-> eax = 0xffffffff;
+
+return; }
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to

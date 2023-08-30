@@ -5,6 +5,7 @@ int
 main (void)
 {
     printf("Hello, World\n");
-    
+    halt();
+ 
     return EXIT_SUCCESS;
 }
