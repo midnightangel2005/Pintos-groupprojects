@@ -63,7 +63,7 @@ struct thread *cur;
   strlcpy (args_c, args, PGSIZE);
  extractFileName (args, file_name);
   
- /*getting the program name from argumentt*/
+ /*getting program name from argumentt*/
   char* file_name = get_program(file_name);
 
   /* Create a new thread to execute file_name. */
@@ -298,7 +298,7 @@ load (const char *args, void (**eip) (void), void **esp)
   bool success = false;
   int i;
 
-//to command the tokenization  for the implementation of argument passing
+//commanding the tokenization  for the implementation of argument passing
 char file_name[NAME_MAX_SIZE];
 strlcpy(file_name, file_name, 100);
 char *argv[255];
