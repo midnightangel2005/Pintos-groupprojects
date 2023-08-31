@@ -7,6 +7,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+
 #include "threads/malloc.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
@@ -20,7 +21,7 @@
 #define MAX_BUF 512    //this is to split large buffers
 #define MIN_FD 2       
 
-/*mapping the file description to the file structyre*/
+/*map the file description to the file structure*/
 
 struct file_map
 {

@@ -6,7 +6,7 @@
 
 typedef int pid_t;
 
-//file status
+//file load status
 enum fileLoadStatus
 {
 FILE_LOAD_SUCCESS,
@@ -16,6 +16,7 @@ FILE_NOT_LOADED
 
 //child process structure
 struct process 
+
 {
 struct semaphore wait;
 struct semaphore load;

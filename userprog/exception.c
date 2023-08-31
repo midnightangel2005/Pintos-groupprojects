@@ -1,6 +1,7 @@
 #include "userprog/exception.h"
 #include <inttypes.h>
 #include <stdio.h>
+
 #include "userprog/gdt.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
@@ -60,8 +61,7 @@ void exception_init (void)
 }
 
 /* Prints exception statistics. */
-void
-exception_print_stats (void) 
+void exception_print_stats (void) 
 {
   printf ("Exception: %lld page faults\n", page_fault_cnt);
 }

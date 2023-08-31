@@ -72,6 +72,7 @@ void sema_down (struct semaphore *sema)
     }
   sema->value--;
   intr_set_level (old_level);
+
 }
 
 /* Down or "P" operation on a semaphore, but only if the
@@ -205,8 +206,7 @@ void lock_acquire (struct lock *lock)
 
    This function will not sleep, so it may be called within an
    interrupt handler. */
-bool
-lock_try_acquire (struct lock *lock)
+bool lock_try_acquire (struct lock *lock)
 {
   bool success;
 

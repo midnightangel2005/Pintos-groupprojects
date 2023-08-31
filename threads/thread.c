@@ -72,6 +72,7 @@ static void init_thread (struct thread *, const char *name, int priority,
 
 #else
 static void init_thread (struct thread *, const char *name, int priority);
+
 #endif
 
 static bool is_thread (struct thread *) UNUSED;
@@ -93,8 +94,7 @@ static tid_t alloc_tid (void);
 
    It is not safe to call thread_current() until this function
    finishes. */
-void
-thread_init (void) 
+void thread_init (void) 
 {
   ASSERT (intr_get_level () == INTR_OFF);
 
@@ -102,7 +102,7 @@ thread_init (void)
   list_init (&ready_list);
   list_init (&all_list);
 
-  /* Set up a thread structure for the running thread. */
+  /* Set up thread structure for the running thread. */
   initial_thread = running_thread ();
   
   #ifdef USERPROG
